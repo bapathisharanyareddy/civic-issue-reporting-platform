@@ -64,11 +64,18 @@ async function initializeDatabase() {
         description TEXT NOT NULL,
         category TEXT NOT NULL,
         location TEXT NOT NULL,
+        latitude REAL,
+        longitude REAL,
+        priority TEXT NOT NULL DEFAULT 'Medium',
         image_url TEXT,
         status TEXT NOT NULL DEFAULT 'Submitted',
         citizen_id INTEGER NOT NULL,
         assigned_to INTEGER,
         department TEXT,
+        deadline_days INTEGER,
+        deadline_date TEXT,
+        complaint_count INTEGER NOT NULL DEFAULT 1,
+        rejection_reason TEXT,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (citizen_id) REFERENCES users(id),
@@ -97,6 +104,17 @@ async function initializeDatabase() {
         FOREIGN KEY (citizen_id) REFERENCES users(id)
       )`);
 
+      database.run(`CREATE TABLE IF NOT EXISTS notifications (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        complaint_id TEXT NOT NULL,
+        official_id INTEGER NOT NULL,
+        message TEXT NOT NULL,
+        is_read INTEGER NOT NULL DEFAULT 0,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (complaint_id) REFERENCES complaints(complaint_id),
+        FOREIGN KEY (official_id) REFERENCES users(id)
+      )`);
+
       // Seed default admin and sample official using synchronous bcrypt
       const adminHash = bcrypt.hashSync('admin123', 12);
       const officialHash = bcrypt.hashSync('official123', 12);
@@ -109,9 +127,22 @@ async function initializeDatabase() {
       database.run(
         `INSERT OR IGNORE INTO users (name, email, phone, password_hash, role, department) VALUES (?,?,?,?,?,?)`,
         ['Road Dept. Officer', 'road@civic.gov', '8888888888', officialHash, 'official', 'Road & Infrastructure'],
-        (err) => {
-          if (err) reject(err);
-          else resolve();
+        async (err) => {
+          if (err) { reject(err); return; }
+          // Run column migrations for existing databases
+          const migrations = [
+            `ALTER TABLE complaints ADD COLUMN latitude REAL`,
+            `ALTER TABLE complaints ADD COLUMN longitude REAL`,
+            `ALTER TABLE complaints ADD COLUMN priority TEXT NOT NULL DEFAULT 'Medium'`,
+            `ALTER TABLE complaints ADD COLUMN deadline_days INTEGER`,
+            `ALTER TABLE complaints ADD COLUMN deadline_date TEXT`,
+            `ALTER TABLE complaints ADD COLUMN complaint_count INTEGER NOT NULL DEFAULT 1`,
+            `ALTER TABLE complaints ADD COLUMN rejection_reason TEXT`,
+          ];
+          for (const sql of migrations) {
+            try { await dbRun(sql); } catch (_) { /* column already exists */ }
+          }
+          resolve();
         }
       );
     });

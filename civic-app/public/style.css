@@ -926,4 +926,210 @@ table.table code {
 @media (max-width: 480px) {
   .stats-grid { grid-template-columns: 1fr 1fr; }
   .auth-card { padding: 1.75rem 1.25rem; }
+
+/* ============================================================
+   LEAFLET MAP — keep below modal / sidebar z-index layers
+   ============================================================ */
+#complaint-map {
+  position: relative;
+  z-index: 0;
 }
+/* Prevent Leaflet popups overlapping the top-bar */
+.leaflet-pane,
+.leaflet-control-container {
+  z-index: 1 !important;
+}
+
+}
+
+/* ============================================================
+   PRIORITY BADGES
+   ============================================================ */
+.priority-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: .3rem;
+  padding: .22rem .65rem;
+  border-radius: 999px;
+  font-size: .78rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.priority-low      { background: #dcfce7; color: #166534; }
+.priority-medium   { background: #dbeafe; color: #1e40af; }
+.priority-high     { background: #fef3c7; color: #92400e; }
+.priority-critical { background: #fee2e2; color: #991b1b; animation: pulse-red 1.8s infinite; }
+
+@keyframes pulse-red {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(220,38,38,.4); }
+  50%       { box-shadow: 0 0 0 5px rgba(220,38,38,0); }
+}
+
+/* ============================================================
+   OVERDUE / WARNING ALERT
+   ============================================================ */
+.overdue-banner {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  background: #fff7ed;
+  border: 1.5px solid #fed7aa;
+  border-radius: var(--radius);
+  padding: .9rem 1.1rem;
+  margin-bottom: 1.25rem;
+}
+.overdue-banner .ov-icon { font-size: 1.5rem; flex-shrink: 0; }
+.overdue-banner .ov-text h4 { font-size: .95rem; font-weight: 700; color: #9a3412; }
+.overdue-banner .ov-text p  { font-size: .85rem; color: #c2410c; margin-top: .1rem; }
+
+.overdue-row > td { background: #fff7ed !important; }
+
+/* ============================================================
+   GOOGLE MAPS CONTAINER
+   ============================================================ */
+#map-picker {
+  width: 100%;
+  height: 300px;
+  border-radius: var(--radius-sm);
+  border: 1.5px solid var(--gray-200);
+  margin-top: .5rem;
+  background: var(--gray-100);
+}
+
+#admin-map {
+  width: 100%;
+  height: 520px;
+  border-radius: var(--radius);
+  border: 1px solid var(--gray-200);
+  background: var(--gray-100);
+}
+
+.map-no-key {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--gray-400);
+  font-size: .9rem;
+  gap: .5rem;
+  text-align: center;
+  padding: 1rem;
+}
+
+/* ============================================================
+   ANALYTICS PAGE
+   ============================================================ */
+.analytics-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
+  margin-bottom: 1.25rem;
+}
+
+@media (max-width: 900px) { .analytics-grid { grid-template-columns: 1fr; } }
+
+/* Donut placeholder — pure CSS segmented ring */
+.status-donut-wrap {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+.donut-legend { display: flex; flex-direction: column; gap: .5rem; }
+.legend-item  { display: flex; align-items: center; gap: .5rem; font-size: .85rem; }
+.legend-dot   { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+
+.area-rank {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  padding: .55rem 0;
+  border-bottom: 1px solid var(--gray-100);
+}
+.area-rank:last-child { border-bottom: none; }
+.area-rank-num {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  background: var(--primary-light);
+  color: var(--primary);
+  display: flex; align-items: center; justify-content: center;
+  font-size: .8rem; font-weight: 700; flex-shrink: 0;
+}
+.area-rank-name { flex: 1; font-size: .9rem; font-weight: 500; color: var(--gray-800); }
+.area-rank-count { font-size: .85rem; font-weight: 700; color: var(--gray-600); }
+.area-rank-bar-track {
+  flex: 1.5; height: 6px;
+  background: var(--gray-100);
+  border-radius: 999px; overflow: hidden;
+}
+.area-rank-bar-fill {
+  height: 100%; border-radius: 999px;
+  background: var(--primary);
+  transition: width .5s ease;
+}
+
+/* complaint count highlight */
+.count-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 10px;
+  font-size: .72rem;
+  font-weight: 700;
+  background: var(--primary-light);
+  color: var(--primary);
+}
+.count-chip.high-count { background: #fee2e2; color: #991b1b; }
+
+/* ============================================================
+   IMAGE UPLOAD — DRAG & DROP ZONE
+   ============================================================ */
+.img-drop-zone {
+  border: 2px dashed var(--gray-300);
+  border-radius: var(--radius);
+  padding: 1.5rem 1rem;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color var(--transition), background var(--transition);
+  position: relative;
+  background: var(--gray-50);
+}
+.img-drop-zone:hover,
+.img-drop-zone.drag-over {
+  border-color: var(--primary);
+  background: var(--primary-light);
+}
+.img-drop-zone.has-image {
+  border-color: var(--success);
+  background: var(--success-light);
+  padding: .75rem;
+}
+.img-drop-inner  { pointer-events: none; }
+.img-drop-icon   { font-size: 2rem; margin-bottom: .4rem; }
+.img-drop-text   { font-size: .9rem; color: var(--gray-600); margin: 0 0 .2rem; }
+.img-drop-browse { color: var(--primary); text-decoration: underline; pointer-events: auto; }
+.img-drop-hint   { font-size: .78rem; color: var(--gray-400); margin: 0; }
+.img-preview {
+  max-width: 100%;
+  max-height: 220px;
+  border-radius: var(--radius-sm);
+  object-fit: contain;
+  display: block;
+  margin: 0 auto .5rem;
+}
+.img-remove-btn {
+  border: none;
+  background: var(--danger);
+  color: #fff;
+  font-size: .8rem;
+  padding: .3rem .8rem;
+  border-radius: 999px;
+  cursor: pointer;
+  margin-top: .25rem;
+}
+.img-remove-btn:hover { background: #b91c1c; }
+.img-upload-error { color: var(--danger); font-size: .83rem; margin-top: .35rem; }

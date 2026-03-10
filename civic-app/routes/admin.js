@@ -99,4 +99,84 @@ router.post('/officials', authenticateToken, requireRole('admin'), async (req, r
   }
 });
 
+// GET /api/admin/analytics — Full analytics for admin dashboard
+router.get('/analytics', authenticateToken, requireRole('admin'), async (req, res) => {
+  try {
+    const [
+      statusDist,
+      categoryStats,
+      priorityStats,
+      areaStats,
+      topByCount,
+      overdue,
+      resolvedRate
+    ] = await Promise.all([
+      dbAll(`SELECT status, COUNT(*) as count FROM complaints GROUP BY status ORDER BY count DESC`, []),
+      dbAll(`SELECT category, COUNT(*) as count, SUM(complaint_count) as total_reports
+             FROM complaints GROUP BY category ORDER BY count DESC`, []),
+      dbAll(`SELECT priority, COUNT(*) as count FROM complaints GROUP BY priority
+             ORDER BY CASE priority WHEN 'Critical' THEN 1 WHEN 'High' THEN 2 WHEN 'Medium' THEN 3 ELSE 4 END`, []),
+      dbAll(`SELECT location,
+               COUNT(*) as complaint_count,
+               SUM(complaint_count) as total_reports,
+               GROUP_CONCAT(DISTINCT category) as categories
+             FROM complaints
+             GROUP BY location
+             ORDER BY total_reports DESC
+             LIMIT 15`, []),
+      dbAll(`SELECT complaint_id, title, category, location, status, priority, complaint_count, created_at
+             FROM complaints
+             ORDER BY complaint_count DESC
+             LIMIT 10`, []),
+      dbAll(`SELECT complaint_id, title, category, location, status, priority,
+               deadline_date, deadline_days,
+               CAST(JULIANDAY('now') - JULIANDAY(deadline_date) AS INTEGER) as days_overdue
+             FROM complaints
+             WHERE deadline_date IS NOT NULL
+               AND deadline_date < DATE('now')
+               AND status != 'Resolved'
+             ORDER BY days_overdue DESC`, []),
+      dbGet(`SELECT
+               ROUND(100.0 * SUM(CASE WHEN status='Resolved' THEN 1 ELSE 0 END) / COUNT(*), 1) as rate
+             FROM complaints`, [])
+    ]);
+
+    res.json({
+      statusDist,
+      categoryStats,
+      priorityStats,
+      areaStats,
+      topByCount,
+      overdue,
+      resolvedRate: resolvedRate ? resolvedRate.rate : 0
+    });
+  } catch (err) {
+    console.error('Analytics error:', err);
+    res.status(500).json({ error: 'Failed to fetch analytics' });
+  }
+});
+
+// GET /api/admin/overdue — Complaints past their deadline
+router.get('/overdue', authenticateToken, requireRole('admin'), async (req, res) => {
+  try {
+    const overdue = await dbAll(
+      `SELECT c.complaint_id, c.title, c.category, c.location, c.status, c.priority,
+              c.deadline_date, c.deadline_days,
+              CAST(JULIANDAY('now') - JULIANDAY(c.deadline_date) AS INTEGER) as days_overdue,
+              u.name as citizen_name, o.name as assigned_officer
+       FROM complaints c
+       JOIN users u ON c.citizen_id = u.id
+       LEFT JOIN users o ON c.assigned_to = o.id
+       WHERE c.deadline_date IS NOT NULL
+         AND c.deadline_date < DATE('now')
+         AND c.status != 'Resolved'
+       ORDER BY days_overdue DESC`,
+      []
+    );
+    res.json(overdue);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch overdue complaints' });
+  }
+});
+
 module.exports = router;
